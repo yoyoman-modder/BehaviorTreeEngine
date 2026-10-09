@@ -1,0 +1,8 @@
+E:\SEScriptsExperiments\source\repo\BehaviorTreeEngine\bin\x64\Debug\netframework48\thumb.png
+E:\SEScriptsExperiments\source\repo\BehaviorTreeEngine\bin\x64\Debug\netframework48\BehaviorTreeEngine.dll
+E:\SEScriptsExperiments\source\repo\BehaviorTreeEngine\bin\x64\Debug\netframework48\BehaviorTreeEngine.pdb
+E:\SEScriptsExperiments\source\repo\BehaviorTreeEngine\obj\x64\Debug\netframework48\BehaviorTreeEngine.csproj.AssemblyReference.cache
+E:\SEScriptsExperiments\source\repo\BehaviorTreeEngine\obj\x64\Debug\netframework48\BehaviorTreeEngine.GeneratedMSBuildEditorConfig.editorconfig
+E:\SEScriptsExperiments\source\repo\BehaviorTreeEngine\obj\x64\Debug\netframework48\BehaviorTreeEngine.csproj.CoreCompileInputs.cache
+E:\SEScriptsExperiments\source\repo\BehaviorTreeEngine\obj\x64\Debug\netframework48\BehaviorTreeEngine.dll
+E:\SEScriptsExperiments\source\repo\BehaviorTreeEngine\obj\x64\Debug\netframework48\BehaviorTreeEngine.pdb
