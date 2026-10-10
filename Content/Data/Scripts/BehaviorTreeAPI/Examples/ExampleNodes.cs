@@ -1,9 +1,10 @@
-﻿using Sandbox.Game.Components;
+﻿using BehaviorTreeAPI.Core;
+using Sandbox.Game.Components;
 using System;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 
-namespace BehaviorTreeAPI
+namespace BehaviorTreeAPI.Examples
 {
     // === Example Leaf Nodes ===
     /// <summary>

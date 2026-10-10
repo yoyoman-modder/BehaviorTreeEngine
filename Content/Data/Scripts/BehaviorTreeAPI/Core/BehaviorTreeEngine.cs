@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 
-namespace BehaviorTreeAPI
+namespace BehaviorTreeAPI.Core
 {
     /// <summary>
     /// Node state
