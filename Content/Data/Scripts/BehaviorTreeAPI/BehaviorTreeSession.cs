@@ -238,9 +238,9 @@ namespace BehaviorTreeAPI
         {
             BehaviorTreeCharacterComponentDatabase.Init();
         }
-        public void Log(string message)
+        public void Log(string message, bool log = false)
         {
-            if (!string.IsNullOrEmpty(message))
+            if (log && !string.IsNullOrEmpty(message))
             {
                 MyAPIGateway.Utilities.ShowMessage(System, message);
             }

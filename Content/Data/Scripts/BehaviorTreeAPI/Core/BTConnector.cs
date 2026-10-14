@@ -17,6 +17,8 @@ namespace BehaviorTreeAPI.Core
         private bool ready = false;
         private BioLatentScheduler Biobuffer;
         private Dictionary<string, Func<MyGameLogicComponent>> BTLogicData = new Dictionary<string, Func<MyGameLogicComponent>>();
+        private int mode;
+        private bool log = false;
         public MyEntityStat BTBridge
         {
             get
@@ -35,9 +37,16 @@ namespace BehaviorTreeAPI.Core
             MyEntityStat btbridge = this.BTBridge;
             if (btbridge != null)
             {
-                if (btbridge.MaxValue == 1)
+                mode = (int)btbridge.MaxValue;
+                switch (mode)
                 {
-                    ConstructBTData();
+                    case 1:
+                        ConstructBTData();
+                        break;
+                    case 2:
+                        ConstructBTData();
+                        log = true;
+                        break;
                 }
             }
             Biobuffer = new BioLatentScheduler();
@@ -45,7 +54,7 @@ namespace BehaviorTreeAPI.Core
         private void ConstructBTData()
         {
             BTLogicData = BehaviorTreeCharacterComponentDatabase.FillCharacterComponents();
-            BehaviorTreeSession.Instance.Log($"Database {BTLogicData.Count}");
+            BehaviorTreeSession.Instance.Log($"Database {BTLogicData.Count}",log);
         }
         private void ConnectToCharacter()
         {
@@ -62,7 +71,7 @@ namespace BehaviorTreeAPI.Core
                 if (bot != null)
                 {
                     AddCharacterComponent(bot, bot.Definition.Id.SubtypeId.ToString());
-                    BehaviorTreeSession.Instance.Log($"BTConnector initialized for {bot.DisplayName}");
+                    BehaviorTreeSession.Instance.Log($"BTConnector initialized for {bot.DisplayName}",log);
                 }
             }
         }
@@ -75,7 +84,7 @@ namespace BehaviorTreeAPI.Core
             Func<MyGameLogicComponent> factory;
             if (!BTLogicData.TryGetValue(v, out factory))
             {
-                BehaviorTreeSession.Instance.Log($"No component factory for key '{v}'");
+                BehaviorTreeSession.Instance.Log($"No component factory for key '{v}'",log);
                 return;
             } 
             var newComp = factory();
@@ -86,14 +95,14 @@ namespace BehaviorTreeAPI.Core
             {
                 if (bot.GameLogic.GetType() == componentType)
                 {
-                    BehaviorTreeSession.Instance.Log($"Already has {bot.GameLogic.GetType().Name}");
+                    BehaviorTreeSession.Instance.Log($"Already has {bot.GameLogic.GetType().Name}",log);
                     return;
                 }
             }
             bot.Components.Add(newComp);
             var builder = new MyObjectBuilder_EntityBase();
             newComp.Init(builder);
-            BehaviorTreeSession.Instance.Log($"Attached {newComp.GetType().Name} to {bot.Definition.Id.SubtypeName}");
+            BehaviorTreeSession.Instance.Log($"Attached {newComp.GetType().Name} to {bot.Definition.Id.SubtypeName}",log);
         }
         public override void Update()
         {
