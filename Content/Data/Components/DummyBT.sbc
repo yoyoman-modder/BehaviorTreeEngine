@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <AIBehaviors>
+    <AIBehavior xsi:type="MyObjectBuilder_BehaviorTreeDefinition">
+      <Id Type="MyObjectBuilder_BehaviorTreeDefinition" Subtype="DummyBT" />
+      <FirstNode xsi:type="MyObjectBuilder_BehaviorTreeSequenceNode">
+        <BTNodes />
+        <Name>Start</Name>
+      </FirstNode>
+      <Behavior>Wolf</Behavior>
+    </AIBehavior>
+  </AIBehaviors>
+</Definitions>

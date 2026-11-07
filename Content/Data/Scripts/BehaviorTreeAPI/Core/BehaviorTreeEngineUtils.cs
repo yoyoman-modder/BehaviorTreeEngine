@@ -20,14 +20,14 @@ namespace BehaviorTreeAPI.Core
             if (BTCharactersLogicData.ContainsKey(subtypeId))
             {
                 MyLog.Default.WriteLine(
-                    "[BehaviorTreeAPI] Duplicate CharacterComponent rejected: " +
+                    "BTEngineAPI Duplicate CharacterComponent rejected: " +
                     subtypeId);
                 return false;
             }
             BTCharactersLogicData.Add(subtypeId, factory);
             MyLog.Default.WriteLine(
-                "[BehaviorTreeAPI] External CharacterComponent registered: " +
-                subtypeId + " -> " + factory.GetType().Name);
+                "BTEngineAPI External CharacterComponent registered: " +
+                subtypeId + " -> " + factory.Invoke().ToString() + " | " + BTCharactersLogicData.Count + " components registered.");
             return true;
         }
         public static Func<MyGameLogicComponent> Get(string subtype)

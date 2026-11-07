@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AquaExpansion.Core
+namespace BehaviorTreeAPI.Core
 {
     public class BioLatentScheduler
     {

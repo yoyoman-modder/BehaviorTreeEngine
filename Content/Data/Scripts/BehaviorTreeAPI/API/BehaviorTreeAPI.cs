@@ -1,240 +1,251 @@
 ﻿using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
-using VRage.Game.ModAPI;
+using VRage.Game.Components;
 using VRage.Utils;
 
-namespace BehaviorTreeAPI.API
+namespace BehaviorTreeAPI
 {
-    public sealed class BTTreeNodeSpec
+    /// <summary>
+    /// Client-side  BehaviorTreeAPI.
+    ///
+    /// Copy this file into another mod to communicate with
+    /// BehaviorEngine.
+    ///
+    /// The AquaExpansion provider uses:
+    ///     Request ID  = 7787
+    ///     Response ID = 7778
+    /// </summary>
+    public static class BTreeAPI
     {
-        private readonly string kind;
-        private readonly string nodeId;
-        private readonly BTTreeNodeSpec[] children;
-        internal BTTreeNodeSpec(string kind,string nodeId,BTTreeNodeSpec[] children)
+        public const ushort API_REQUEST_ID = 7787;
+        public const ushort API_RESPONSE_ID = 7778;
+        public const int API_VERSION = 1;
+        private const string REQUEST_NAME = "BTEngineAPI";
+        private static readonly string logname = $"[{REQUEST_NAME}] ";
+        private static bool _initialized;
+        private static bool _requestSent;
+        private static bool _available;
+        private static bool _unloading;
+        private static string _ownerName;
+        private static Dictionary<string, Delegate> _apiMethods;
+        public static event Action OnAvailable;
+        public const uint BTLINK_ID = 7789;
+        private const string BTLINK_REQUEST = "BTEngine:Check";
+        private const string BTLINK_RESPONSE = "BTEngine:Ready";
+
+        private static bool _heartbeatReceived;
+        public static bool Available
         {
-            this.kind = kind;
-            this.nodeId = nodeId;
-            this.children = children;
+            get { return _available; }
         }
-        // Only arrays and strings cross the mod-message bridge.
-        internal object[] ToPayload()
+        public static bool BTlinkHeartbeat
         {
-            if (kind == "custom")
-                return new object[] { "custom", nodeId };
-            object[] childPayloads = new object[children.Length];
-            for (int i = 0; i < children.Length; i++)
-                childPayloads[i] = children[i].ToPayload();
-            return new object[] { kind, childPayloads };
+            get { return _heartbeatReceived; }
         }
-    }
-    public static class BTTree
-    {
-        public static BTTreeNodeSpec Custom(string nodeId)
+        public static string OwnerName
         {
-            if (string.IsNullOrEmpty(nodeId))
-                throw new ArgumentException("Node ID is required.", "nodeId");
-            return new BTTreeNodeSpec("custom", nodeId, null);
+            get { return _ownerName; }
         }
-        public static BTTreeNodeSpec Sequence(params BTTreeNodeSpec[] children)
+        // =====================================================
+        // INITIALIZE
+        // =====================================================
+        public static void Initialize()
         {
-            return CreateComposite("sequence", children);
-        }
-        public static BTTreeNodeSpec Selector(params BTTreeNodeSpec[] children)
-        {
-            return CreateComposite("selector", children);
-        }
-        public static BTTreeNodeSpec Loop(BTTreeNodeSpec child)
-        {
-            if (child == null)
-                throw new ArgumentNullException("child");
-            return new BTTreeNodeSpec("loop", null, new BTTreeNodeSpec[] { child });
-        }
-        private static BTTreeNodeSpec CreateComposite(string kind, BTTreeNodeSpec[] children)
-        {
-            if (children == null || children.Length == 0)
-                throw new ArgumentException("At least one child is required.");
-            foreach (BTTreeNodeSpec child in children)
-            {
-                if (child == null)
-                    throw new ArgumentException("Tree children cannot be null.");
-            }
-            return new BTTreeNodeSpec(kind, null, children);
-        }
-    }
-    public class BTAPI : IDisposable
-    {
-        private const long HeartbeatMessageId = 786431205;
-        private const long RegistrationMessageId = 786431206;
-        private const int HeartbeatTimeout = 30;
-        public const int CustomNodeRunning = 0;
-        public const int CustomNodeSuccess = 1;
-        public const int CustomNodeFailure = 2;
-        public bool Heartbeat { get; private set; }
-        private int ticksSinceHeartbeat;
-        private bool registered;
-        private Action onRegisteredCallback;
-        private readonly Dictionary<string, Action<bool>> nodeCallbacks = new Dictionary<string, Action<bool>>(StringComparer.Ordinal);
-        private readonly Dictionary<string, Action<bool>> treeCallbacks = new Dictionary<string, Action<bool>>(StringComparer.Ordinal);
-        public void Init(Action callback)
-        {
-            if (registered || MyAPIGateway.Utilities == null)
+            if (_initialized)
                 return;
-            onRegisteredCallback = callback;
-            ticksSinceHeartbeat = HeartbeatTimeout;
-            Heartbeat = false;
-            MyAPIGateway.Utilities.RegisterMessageHandler(HeartbeatMessageId,HeartbeatHandler);
-            MyAPIGateway.Utilities.RegisterMessageHandler(RegistrationMessageId,RegistrationHandler);
-            registered = true;
-            MyLog.Default.WriteLine("[BTAPI] BTEngine handlers registered.");
-        }
-        public void Update()
-        {
-            if (!registered)
+            if (MyAPIGateway.Utilities == null)
+            {
+                MyLog.Default.WriteLine(logname+"Initialize failed: Utilities NULL.");
                 return;
-            if (ticksSinceHeartbeat < HeartbeatTimeout)
-                ticksSinceHeartbeat++;
-            if (ticksSinceHeartbeat >= HeartbeatTimeout)
-                Heartbeat = false;
+            }
+            _initialized = true;
+            _unloading = false;
+            _requestSent = false;
+            _available = false;
+            _apiMethods = null;
+            // Automatically identify the consuming mod.
+            try
+            {
+                _ownerName = MyAPIGateway.Utilities.GamePaths.ModScopeName;
+            }
+            catch
+            {
+                _ownerName = "UnknownMod";
+            }
+            if (string.IsNullOrWhiteSpace(_ownerName))
+            {
+                _ownerName = "UnknownMod";
+            }
+            _ownerName = _ownerName.Trim();
+            MyAPIGateway.Utilities.RegisterMessageHandler(API_RESPONSE_ID, MessageHandler);
+            MyAPIGateway.Utilities.RegisterMessageHandler(BTLINK_ID,BTLinkHandler);
+            MyLog.Default.WriteLine(logname+"Client initialized. Owner=" +_ownerName);
         }
-        private void HeartbeatHandler(object message)
+
+        private static void BTLinkHandler(object obj)
         {
-            if ((message as string) != "BTEngine:Ready")
+            if (_unloading || obj == null)
                 return;
-            bool wasReady = Heartbeat;
-            ticksSinceHeartbeat = 0;
-            Heartbeat = true;
-            if (!wasReady && onRegisteredCallback != null)
-                onRegisteredCallback();
+            string response = obj as string;
+            if (response == BTLINK_RESPONSE)
+                _heartbeatReceived = true;
         }
-        public bool RegisterCustomNode(string id,Func<object> createState,Action<IMyCharacter, object> start,Func<IMyCharacter, object, float, int> tick,Action<IMyCharacter, object> end,Action<bool> onResult = null)
+
+        // =====================================================
+        // REQUEST PROVIDER
+        // =====================================================
+        public static void RequestProvider()
         {
-            if (!Heartbeat ||
-                string.IsNullOrEmpty(id) ||
-                createState == null ||
-                start == null ||
-                tick == null ||
-                end == null)
-                return false;
-            if (onResult != null)
-                nodeCallbacks[id] = onResult;
-            MyAPIGateway.Utilities.SendModMessage(
-                RegistrationMessageId,
-                new object[]
-                {"register",id,createState,start,tick,end});
-            return true;
-        }
-        public bool RegisterTree(string treeId,BTTreeNodeSpec root,Action<bool> onResult = null)
-        {
-            if (!Heartbeat ||
-                string.IsNullOrEmpty(treeId) ||
-                root == null)
-                return false;
-            if (onResult != null)
-                treeCallbacks[treeId] = onResult;
-            MyAPIGateway.Utilities.SendModMessage(
-                RegistrationMessageId,
-                new object[]
-                {"registerTree",treeId,root.ToPayload()});
-            return true;
-        }
-        public bool StartTree(IMyCharacter character, string treeId)
-        {
-            if (!Heartbeat ||
-                character == null ||
-                character.MarkedForClose ||
-                string.IsNullOrEmpty(treeId))
-                return false;
-            MyAPIGateway.Utilities.SendModMessage(
-                RegistrationMessageId,
-                new object[]
-                {"startTree",character.EntityId,treeId});
-            return true;
-        }
-        public bool StopTree(IMyCharacter character)
-        {
-            if (character == null)
-                return false;
-            MyAPIGateway.Utilities.SendModMessage(
-                RegistrationMessageId,
-                new object[]
-                {"stopTree",character.EntityId});
-            return true;
-        }
-        public bool UnregisterCustomNode(string id)
-        {
-            if (!Heartbeat || string.IsNullOrEmpty(id))
-                return false;
-            MyAPIGateway.Utilities.SendModMessage(
-                RegistrationMessageId,
-                new object[] { "unregister", id });
-            return true;
-        }
-        public bool UnregisterTree(string treeId)
-        {
-            if (!Heartbeat || string.IsNullOrEmpty(treeId))
-                return false;
-            MyAPIGateway.Utilities.SendModMessage(
-                RegistrationMessageId,
-                new object[] { "unregisterTree", treeId });
-            return true;
-        }
-        private void RegistrationHandler(object message)
-        {
-            string response = message as string;
-            if (string.IsNullOrEmpty(response))
+            if (!_initialized)
                 return;
-            if (HandleResult(
-                response,
-                "BTEngine:CustomNodeRegistered:",
-                "BTEngine:CustomNodeRejected:",
-                nodeCallbacks))
+            if (_unloading)
                 return;
-            HandleResult(
-                response,
-                "BTEngine:TreeRegistered:",
-                "BTEngine:TreeRejected:",
-                treeCallbacks);
+            if (_requestSent)
+                return;
+            if (_available)
+                return;
+            if (MyAPIGateway.Utilities == null)
+                return;
+            if (MyAPIGateway.Session == null)
+                return;
+            try
+            {
+                MyAPIGateway.Utilities.SendModMessage(API_REQUEST_ID, REQUEST_NAME);
+                _requestSent = true;
+
+                MyLog.Default.WriteLine(logname +"Provider request sent.");
+            }
+            catch (Exception e)
+            {
+                MyLog.Default.WriteLine(logname +"Request error:");
+                MyLog.Default.WriteLine(e.ToString());
+            }
         }
-        private bool HandleResult(string response,string acceptedPrefix,string rejectedPrefix,Dictionary<string, Action<bool>> callbacks)
+        private static void MessageHandler(object obj)
         {
-            bool success;
-            string id;
-            if (response.StartsWith(acceptedPrefix, StringComparison.Ordinal))
+            if (_unloading)
+                return;
+            if (obj == null)
+                return;
+            Dictionary<string, Delegate> methods = obj as Dictionary<string, Delegate>;
+            if (methods == null)
             {
-                success = true;
-                id = response.Substring(acceptedPrefix.Length);
+                MyLog.Default.WriteLine(logname +"Invalid provider response.");
+                return;
             }
-            else if (response.StartsWith(rejectedPrefix, StringComparison.Ordinal))
+            _apiMethods = methods;
+            Func<int, bool> verifyVersion = GetMethod<Func<int, bool>>("VerifyVersion");
+            if (verifyVersion == null)
+                return;
+            bool compatible;
+            try
             {
-                success = false;
-                id = response.Substring(rejectedPrefix.Length);
+                compatible = verifyVersion(API_VERSION);
             }
-            else
+            catch (Exception e)
             {
+                MyLog.Default.WriteLine(logname +"Version check failed:");
+                MyLog.Default.WriteLine(e.ToString());
+                return;
+            }
+            if (!compatible)
+            {
+                MyLog.Default.WriteLine(logname +"Incompatible API version.");
+                return;
+            }
+            _available = true;
+            MyLog.Default.WriteLine(logname +"Provider available.");
+            try
+            {
+                Action callback = OnAvailable;
+                if (callback != null)
+                    callback();
+            }
+            catch (Exception e)
+            {
+                MyLog.Default.WriteLine(logname +"OnAvailable error:");
+                MyLog.Default.WriteLine(e.ToString());
+            }
+        }
+        private static T GetMethod<T>(string name) where T : class
+        {
+            if (_apiMethods == null)
+                return null;
+            Delegate method;
+            if (!_apiMethods.TryGetValue(name, out method))
+            {
+                MyLog.Default.WriteLine(logname +"Method not found: " +name);
+                return null;
+            }
+            return method as T;
+        }
+        public static bool RegisterExternalComponent(string subtype, Func<MyGameLogicComponent> factory)
+        {
+            if (!_available)
+                return false;
+            if (string.IsNullOrWhiteSpace(subtype) ||
+                factory == null)
+                return false;
+            Func<Dictionary<string, object>, bool> method = GetMethod<Func<Dictionary<string, object>, bool>>("RegisterExternalComponent");
+            //Func<string, Func<MyGameLogicComponent>, bool> method = GetMethod<Func<string, Func<MyGameLogicComponent>, bool>>("RegisterExternalComponent");
+            if (method == null)
+                return false;
+            Dictionary<string, object> data = new Dictionary<string, object>();
+            data["subtype"] = subtype;
+            data["factory"] = factory;
+            // Owner is added automatically.
+            data["Owner"] = _ownerName;
+            try
+            {
+                return method(data);
+            }
+            catch (Exception e)
+            {
+                MyLog.Default.WriteLine(
+                    logname +
+                    "Register CharacterComponent error:");
+                MyLog.Default.WriteLine(e.ToString());
                 return false;
             }
-            Action<bool> callback;
-            if (callbacks.TryGetValue(id, out callback))
-            {
-                callbacks.Remove(id);
-                callback(success);
-            }
-            return true;
         }
-        public void Dispose()
+        public static void UpdateHeartbeat()
         {
-            if (registered && MyAPIGateway.Utilities != null)
+            if (_unloading || MyAPIGateway.Session == null)
+                return;
+            _heartbeatReceived = false;
+            MyAPIGateway.Utilities.SendModMessage(BTLINK_ID,BTLINK_REQUEST);
+            _available = _heartbeatReceived;
+        }
+        public static void Close()
+        {
+            if (!_initialized)
+                return;
+            _unloading = true;
+            MyLog.Default.WriteLine(logname +"Client unloading. Owner=" +_ownerName);
+            try
             {
-                MyAPIGateway.Utilities.UnregisterMessageHandler(HeartbeatMessageId,HeartbeatHandler);
-                MyAPIGateway.Utilities.UnregisterMessageHandler(RegistrationMessageId,RegistrationHandler);
+                if (MyAPIGateway.Utilities != null)
+                {
+                    MyAPIGateway.Utilities.UnregisterMessageHandler(API_RESPONSE_ID, MessageHandler);
+                    MyAPIGateway.Utilities.UnregisterMessageHandler(BTLINK_ID,BTLinkHandler);
+                }
             }
-            nodeCallbacks.Clear();
-            treeCallbacks.Clear();
-            registered = false;
-            Heartbeat = false;
-            ticksSinceHeartbeat = HeartbeatTimeout;
-            onRegisteredCallback = null;
+            catch (Exception e)
+            {
+                MyLog.Default.WriteLine(
+                    logname +
+                    "Error unregistering:");
+                MyLog.Default.WriteLine(e.ToString());
+            }
+            _apiMethods = null;
+            _requestSent = false;
+            _heartbeatReceived = false;
+            _available = false;
+            _initialized = false;
+            _ownerName = null;
+            OnAvailable = null;
+            MyLog.Default.WriteLine(logname +"Client unloaded.");
         }
     }
 }
