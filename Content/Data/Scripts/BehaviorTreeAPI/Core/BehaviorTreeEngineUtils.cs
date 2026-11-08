@@ -19,15 +19,12 @@ namespace BehaviorTreeAPI.Core
             string subtypeId = subtype.Trim();
             if (BTCharactersLogicData.ContainsKey(subtypeId))
             {
-                MyLog.Default.WriteLine(
-                    "BTEngineAPI Duplicate CharacterComponent rejected: " +
-                    subtypeId);
+                BehaviorTreeSession.Instance.ConsoleLog("[BTEngine] Duplicate CharacterComponent rejected: " + subtypeId);
                 return false;
             }
             BTCharactersLogicData.Add(subtypeId, factory);
-            MyLog.Default.WriteLine(
-                "BTEngineAPI External CharacterComponent registered: " +
-                subtypeId + " -> " + factory.Method.Name + " | " + BTCharactersLogicData.Count + " components registered.");
+            BehaviorTreeSession.Instance.ConsoleLog("[BTEngine] External CharacterComponent registered: " +
+            subtypeId + " -> " + factory.Invoke().ToString() + " | " + BTCharactersLogicData.Count + " components registered.");
             return true;
         }
         public static bool UpdateExternalComponent(string subtype, Func<MyGameLogicComponent> factory)
@@ -38,9 +35,8 @@ namespace BehaviorTreeAPI.Core
             if (!BTCharactersLogicData.ContainsKey(subtypeId))
                 return false;
             BTCharactersLogicData[subtypeId] = factory;
-            MyLog.Default.WriteLine(
-                "BTEngineAPI External CharacterComponent updated: " +
-                subtypeId + " -> " + factory.Method.Name);
+            BehaviorTreeSession.Instance.ConsoleLog("[BTEngine] External CharacterComponent updated: " +
+            subtypeId + " -> " + factory.Invoke().ToString());
             return true;
         }
         public static Func<MyGameLogicComponent> Get(string subtype)

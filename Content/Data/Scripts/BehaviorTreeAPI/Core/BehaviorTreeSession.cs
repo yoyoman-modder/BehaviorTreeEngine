@@ -10,7 +10,7 @@ namespace BehaviorTreeAPI
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
     public class BehaviorTreeSession : MySessionComponentBase
     {
-        private string System = "BTEngine";
+        private static string SystemName = "BTEngine";
         public static BehaviorTreeSession Instance { get; private set; }
         public const ushort API_REQUEST_ID = 7787;
         public const ushort API_RESPONSE_ID = 7778;
@@ -19,7 +19,7 @@ namespace BehaviorTreeAPI
         private const string REQUEST_NAME = "BTEngineAPI";
         private const string BTLINK_REQUEST = "BTEngine:Check";
         private const string BTLINK_RESPONSE = "BTEngine:Ready";
-        private static readonly string logname = $"[{REQUEST_NAME}] ";
+        private static readonly string logname = $"[{SystemName}] ";
         private bool _registered;
         private bool _unloading;
         private readonly Dictionary<string, Delegate> _apiMethods = new Dictionary<string, Delegate>(StringComparer.OrdinalIgnoreCase);
@@ -36,13 +36,12 @@ namespace BehaviorTreeAPI
             Log("Provider LoadData.",true);
             MyAPIGateway.Utilities.RegisterMessageHandler(API_REQUEST_ID, MessageHandler);
             _registered = true;
-            MyLog.Default.WriteLine(
-                logname +
+            ConsoleLog(logname +
                 "Provider registered. " +
                 "RequestID=" + API_REQUEST_ID +
                 " ResponseID=" + API_RESPONSE_ID);
             MyAPIGateway.Utilities.RegisterMessageHandler(BTLINK_ID,BTLinkHandler);
-            Log("Provider registered.", true);
+            //Log("Provider registered.", true);
             InitDatabases();
         }
         private void BTLinkHandler(object obj)
@@ -53,10 +52,8 @@ namespace BehaviorTreeAPI
             if (request != BTLINK_REQUEST)
                 return;
             MyAPIGateway.Utilities.SendModMessage(BTLINK_ID,BTLINK_RESPONSE);
-            MyLog.Default.WriteLine(logname + "BTLink sent.");
-            Log("BTLink request received.", true);
+            //Log("BTLink request received.", true);
         }
-
         private void MessageHandler(object obj)
         {
             if (_unloading)
@@ -70,21 +67,21 @@ namespace BehaviorTreeAPI
             {
                 return;
             }
-            MyLog.Default.WriteLine(logname +"Client request received.");
-            Log("Client request received.", true);
+            ConsoleLog(logname + "Client request received.");
+            //Log("Client request received.", true);
             if (_unloading)
                 return;
             try
             {
                 MyAPIGateway.Utilities.SendModMessage(API_RESPONSE_ID, _apiMethods);
-                MyLog.Default.WriteLine(logname +"API response sent.");
-                Log("API response sent.", true);
+                ConsoleLog(logname + "API response sent.");
+                //Log("API response sent.", true);
             }
             catch (Exception e)
             {
-                MyLog.Default.WriteLine(logname +"Failed to send API response:");
-                Log("Failed to send API response:", true);
-                MyLog.Default.WriteLine(e.ToString());
+                ConsoleLog(logname + "Failed to send API response:");
+                ConsoleLog(e.ToString());
+                //Log("Failed to send API response:", true);
             }
         }
         public override void UpdateBeforeSimulation()
@@ -100,7 +97,14 @@ namespace BehaviorTreeAPI
         {
             if (log && !string.IsNullOrEmpty(message))
             {
-                MyAPIGateway.Utilities.ShowMessage(System, message);
+                MyAPIGateway.Utilities.ShowMessage(SystemName, message);
+            }
+        }
+        public void ConsoleLog(string message, bool log = true)
+        {
+            if (log && !string.IsNullOrEmpty(message))
+            {
+                MyLog.Default.WriteLine(message);
             }
         }
         // =====================================================
@@ -110,100 +114,76 @@ namespace BehaviorTreeAPI
         {
             _apiMethods.Clear();
             _apiMethods.Add("VerifyVersion", new Func<int, bool>(VerifyVersion));
-            //_apiMethods.Add("RegisterExternalComponent",new Func<string, Func<MyGameLogicComponent>, bool>(BehaviorTreeCharacterComponentDatabase.RegisterExternalComponent));
             _apiMethods.Add("RegisterExternalComponent", new Func<Dictionary<string, object>, bool>(RegisterExternalComponent));
-            MyLog.Default.WriteLine(logname +"API methods created: " +_apiMethods.Count);
+            ConsoleLog(logname + "API methods created: " + _apiMethods.Count);
         }
         private bool RegisterExternalComponent(Dictionary<string, object> data)
         {
-            if (_unloading)
-                return false;
-            if (data == null)
+            if (_unloading || data == null)
                 return false;
             string subtype = GetString(data, "subtype");
             string owner = GetString(data, "Owner");
-            Func<MyGameLogicComponent> factory = data.ContainsKey("factory")
-                   ? data["factory"] as Func<MyGameLogicComponent>
-                   : null;
+            object factoryValue;
+            Func<MyGameLogicComponent> factory =
+                data.TryGetValue("factory", out factoryValue)
+                    ? factoryValue as Func<MyGameLogicComponent>
+                    : null;
             if (string.IsNullOrWhiteSpace(subtype))
             {
-                MyLog.Default.WriteLine(
-                   logname +
-                   "External registration rejected: " +
-                   "empty subtype.");
+                ConsoleLog(logname + "External registration rejected: empty subtype.");
                 return false;
             }
             if (string.IsNullOrWhiteSpace(owner))
             {
-                MyLog.Default.WriteLine(
-                    logname +
-                    "External registration rejected: " +
-                    "empty owner.");
+                ConsoleLog(logname + "External registration rejected: empty owner.");
+                return false;
+            }
+            if (factory == null)
+            {
+                ConsoleLog(logname + "External registration rejected: missing or invalid factory.");
                 return false;
             }
             subtype = subtype.Trim();
             owner = owner.Trim();
-            // =================================================
-            // DUPLICATE / OWNERSHIP CHECK
-            // =================================================
             string existingOwner;
             bool updating = _externalCharactersLogicOwners.TryGetValue(subtype, out existingOwner);
             if (updating)
             {
-                // Same mod can update its own logic.
-                if (!string.Equals(existingOwner, owner, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(existingOwner,owner,StringComparison.OrdinalIgnoreCase))
                 {
-                    MyLog.Default.WriteLine(
-                        logname +
+                    ConsoleLog(logname +
                         "CharacterComponent registration REJECTED. " +
-                        "Subtype '" +
-                        subtype +
-                        "' is already owned by '" +
-                        existingOwner +
-                        "'. Requested by '" +
-                        owner +
-                        "'.");
+                        "Subtype '" + subtype +
+                        "' is already owned by '" + existingOwner +
+                        "'. Requested by '" + owner + "'.");
                     return false;
                 }
-                MyLog.Default.WriteLine(
-                   logname +
-                   "Existing owner updating CharacterComponent: " +
-                   subtype +
-                   " / " +
-                   owner);
+                ConsoleLog(logname +
+                    "Existing owner updating CharacterComponent: " +
+                    subtype + " / " + owner);
             }
             try
             {
-                if (factory == null)
-                    return false;
                 bool result = updating
                     ? BehaviorTreeCharacterComponentDatabase.UpdateExternalComponent(subtype, factory)
                     : BehaviorTreeCharacterComponentDatabase.RegisterExternalComponent(subtype, factory);
                 if (!result)
                 {
-                    MyLog.Default.WriteLine(
-                        logname +
-                        "Database rejected ammo: " +
-                        subtype);
-                    return false; 
+                    ConsoleLog(logname + "Database rejected Component: " + subtype);
+                    return false;
                 }
-                // Only claim ownership after successful registration.
                 _externalCharactersLogicOwners[subtype] = owner;
-                MyLog.Default.WriteLine(
-                    logname +
+                ConsoleLog(logname +
                     "External CharacterComponent registered: " +
-                    subtype +
-                    " Owner=" +
-                    owner);
+                    subtype + " Owner=" + owner);
                 return true;
             }
             catch (Exception e)
             {
-                MyLog.Default.WriteLine(
-                   logname +
-                   "Error registering external CharacterComponent: " +
-                   subtype);
-                MyLog.Default.WriteLine(e.ToString());
+                ConsoleLog(logname +
+                    "Error registering external CharacterComponent: " +
+                    subtype);
+                ConsoleLog(e.ToString());
                 return false;
             }
         }
@@ -212,8 +192,7 @@ namespace BehaviorTreeAPI
             if (_unloading)
                 return false;
             bool result = version == API_VERSION;
-            MyLog.Default.WriteLine(
-                logname +
+            ConsoleLog(logname +
                 "Version check: " +
                 version +
                 " -> " +
@@ -235,7 +214,7 @@ namespace BehaviorTreeAPI
         protected override void UnloadData()
         {
             _unloading = true;
-            MyLog.Default.WriteLine(logname +"Provider unloading.");
+            ConsoleLog(logname + "Provider unloading.");
             if (_registered)
             {
                 try
@@ -248,8 +227,8 @@ namespace BehaviorTreeAPI
                 }
                 catch (Exception e)
                 {
-                    MyLog.Default.WriteLine(logname +"Error unregistering handler:");
-                    MyLog.Default.WriteLine(e.ToString());
+                    ConsoleLog(logname + "Error unregistering handler:");
+                    ConsoleLog(e.ToString());
                 }
                 _registered = false;
             }

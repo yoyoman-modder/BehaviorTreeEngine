@@ -18,7 +18,6 @@ namespace BehaviorTreeAPI.Core
         private BioLatentScheduler Biobuffer;
         private Dictionary<string, Func<MyGameLogicComponent>> BTLogicData = new Dictionary<string, Func<MyGameLogicComponent>>();
         private int mode;
-        private bool log = true;
         private static readonly string logname = "[BTEngine] ";
         public MyEntityStat BTBridge
         {
@@ -43,10 +42,6 @@ namespace BehaviorTreeAPI.Core
                 {
                     case 1:
                         ConstructBTData();
-                        break;
-                    case 2:
-                        ConstructBTData();
-                        log = true;
                         break;
                 }
             }
@@ -73,8 +68,7 @@ namespace BehaviorTreeAPI.Core
                 if (bot != null)
                 {
                     AddCharacterComponent(bot, bot.Definition.Id.SubtypeId.ToString());
-                    //BehaviorTreeSession.Instance.Log($"BTConnector initialized",log);
-                    MyLog.Default.WriteLine(logname + "BTConnector initialized" + " -> " + bot?.DisplayName);
+                    BehaviorTreeSession.Instance.ConsoleLog(logname + "BTConnector initialized" + " -> " + bot?.DisplayName);
                 }
             }
         }
@@ -87,8 +81,7 @@ namespace BehaviorTreeAPI.Core
             Func<MyGameLogicComponent> factory;
             if (!BTLogicData.TryGetValue(v, out factory))
             {
-                //BehaviorTreeSession.Instance.Log($"No component factory",log);
-                MyLog.Default.WriteLine(logname + "No component factory" + " -> " + bot?.DisplayName);
+                BehaviorTreeSession.Instance.ConsoleLog(logname + "No component factory" + " -> " + bot?.DisplayName);
                 return;
             } 
             var newComp = factory();
@@ -99,16 +92,14 @@ namespace BehaviorTreeAPI.Core
             {
                 if (bot.GameLogic.GetType() == componentType)
                 {
-                    //BehaviorTreeSession.Instance.Log($"Already has ",log);
-                    MyLog.Default.WriteLine(logname + "Character already have a component " + componentType?.Name + " -> " + bot?.DisplayName);
+                    BehaviorTreeSession.Instance.ConsoleLog(logname + "Character already have a component " + componentType?.Name + " -> " + bot?.DisplayName);
                     return;
                 }
             }
             bot.Components.Add(newComp);
             var builder = new MyObjectBuilder_EntityBase();
             newComp.Init(builder);
-            //BehaviorTreeSession.Instance.Log($"Attached {newComp?.GetType()?.Name}",log);
-            MyLog.Default.WriteLine(logname + "Component attached " + newComp?.GetType().Name + " -> " + bot?.DisplayName);
+            BehaviorTreeSession.Instance.ConsoleLog(logname + "Component attached " + newComp?.GetType().Name + " -> " + bot?.DisplayName);
         }
         public override void Update()
         {
