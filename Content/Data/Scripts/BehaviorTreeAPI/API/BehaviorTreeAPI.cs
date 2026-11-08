@@ -25,6 +25,8 @@ namespace BehaviorTreeAPI
         private static readonly string logname = $"[{REQUEST_NAME}] ";
         private static bool _initialized;
         private static bool _requestSent;
+        private static DateTime _lastRequestTime = DateTime.MinValue;
+        private static readonly TimeSpan RequestRetryInterval = TimeSpan.FromSeconds(5);
         private static bool _available;
         private static bool _unloading;
         private static string _ownerName;
@@ -61,6 +63,7 @@ namespace BehaviorTreeAPI
             _initialized = true;
             _unloading = false;
             _requestSent = false;
+            _lastRequestTime = DateTime.MinValue;
             _available = false;
             _apiMethods = null;
             // Automatically identify the consuming mod.
@@ -100,9 +103,9 @@ namespace BehaviorTreeAPI
                 return;
             if (_unloading)
                 return;
-            if (_requestSent)
-                return;
             if (_available)
+                return;
+            if (_requestSent && DateTime.UtcNow - _lastRequestTime < RequestRetryInterval)
                 return;
             if (MyAPIGateway.Utilities == null)
                 return;
@@ -112,6 +115,7 @@ namespace BehaviorTreeAPI
             {
                 MyAPIGateway.Utilities.SendModMessage(API_REQUEST_ID, REQUEST_NAME);
                 _requestSent = true;
+                _lastRequestTime = DateTime.UtcNow;
 
                 MyLog.Default.WriteLine(logname +"Provider request sent.");
             }
@@ -210,11 +214,12 @@ namespace BehaviorTreeAPI
         }
         public static void UpdateHeartbeat()
         {
-            if (_unloading || MyAPIGateway.Session == null)
+            if (_unloading || MyAPIGateway.Session == null || MyAPIGateway.Utilities == null)
                 return;
             _heartbeatReceived = false;
             MyAPIGateway.Utilities.SendModMessage(BTLINK_ID,BTLINK_REQUEST);
-            _available = _heartbeatReceived;
+            if (!_available)
+                RequestProvider();
         }
         public static void Close()
         {
@@ -239,6 +244,7 @@ namespace BehaviorTreeAPI
             }
             _apiMethods = null;
             _requestSent = false;
+            _lastRequestTime = DateTime.MinValue;
             _heartbeatReceived = false;
             _available = false;
             _initialized = false;
