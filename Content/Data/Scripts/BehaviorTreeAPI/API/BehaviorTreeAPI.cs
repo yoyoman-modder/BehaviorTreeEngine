@@ -33,7 +33,6 @@ namespace BehaviorTreeAPI
         public const uint BTLINK_ID = 7789;
         private const string BTLINK_REQUEST = "BTEngine:Check";
         private const string BTLINK_RESPONSE = "BTEngine:Ready";
-
         private static bool _heartbeatReceived;
         public static bool Available
         {
