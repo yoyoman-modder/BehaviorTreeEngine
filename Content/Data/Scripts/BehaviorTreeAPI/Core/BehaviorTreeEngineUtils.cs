@@ -7,7 +7,7 @@ namespace BehaviorTreeAPI.Core
 {
     public static class BehaviorTreeCharacterComponentDatabase
     {
-        private static readonly Dictionary<string, Func<MyGameLogicComponent>> BTCharactersLogicData = new Dictionary<string, Func<MyGameLogicComponent>>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Func<MyGameLogicComponent>> BTCharactersLogicData = new Dictionary<string, Func<MyGameLogicComponent>>(StringComparer.OrdinalIgnoreCase);
         public static void Init()
         {
             BTCharactersLogicData.Clear();
@@ -27,7 +27,20 @@ namespace BehaviorTreeAPI.Core
             BTCharactersLogicData.Add(subtypeId, factory);
             MyLog.Default.WriteLine(
                 "BTEngineAPI External CharacterComponent registered: " +
-                subtypeId + " -> " + factory.Invoke().ToString() + " | " + BTCharactersLogicData.Count + " components registered.");
+                subtypeId + " -> " + factory.Method.Name + " | " + BTCharactersLogicData.Count + " components registered.");
+            return true;
+        }
+        public static bool UpdateExternalComponent(string subtype, Func<MyGameLogicComponent> factory)
+        {
+            if (string.IsNullOrWhiteSpace(subtype) || factory == null)
+                return false;
+            string subtypeId = subtype.Trim();
+            if (!BTCharactersLogicData.ContainsKey(subtypeId))
+                return false;
+            BTCharactersLogicData[subtypeId] = factory;
+            MyLog.Default.WriteLine(
+                "BTEngineAPI External CharacterComponent updated: " +
+                subtypeId + " -> " + factory.Method.Name);
             return true;
         }
         public static Func<MyGameLogicComponent> Get(string subtype)
