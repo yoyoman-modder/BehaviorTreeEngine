@@ -147,7 +147,8 @@ namespace BehaviorTreeAPI
             // DUPLICATE / OWNERSHIP CHECK
             // =================================================
             string existingOwner;
-            if (_externalCharactersLogicOwners.TryGetValue(subtype, out existingOwner))
+            bool updating = _externalCharactersLogicOwners.TryGetValue(subtype, out existingOwner);
+            if (updating)
             {
                 // Same mod can update its own logic.
                 if (!string.Equals(existingOwner, owner, StringComparison.OrdinalIgnoreCase))
@@ -173,7 +174,11 @@ namespace BehaviorTreeAPI
             }
             try
             {
-                bool result = BehaviorTreeCharacterComponentDatabase.RegisterExternalComponent(subtype, factory);
+                if (factory == null)
+                    return false;
+                bool result = updating
+                    ? BehaviorTreeCharacterComponentDatabase.UpdateExternalComponent(subtype, factory)
+                    : BehaviorTreeCharacterComponentDatabase.RegisterExternalComponent(subtype, factory);
                 if (!result)
                 {
                     MyLog.Default.WriteLine(
