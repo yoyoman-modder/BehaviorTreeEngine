@@ -12,10 +12,10 @@ namespace BehaviorTreeAPI
     {
         private static string SystemName = "BTEngine";
         public static BehaviorTreeSession Instance { get; private set; }
-        public const ushort API_REQUEST_ID = 7787;
-        public const ushort API_RESPONSE_ID = 7778;
-        public const ushort BTLINK_ID = 7789;
-        public const int API_VERSION = 1;
+        private const ushort API_REQUEST_ID = 7787;
+        private const ushort API_RESPONSE_ID = 7778;
+        private const ushort BTLINK_ID = 7789;
+        private const int API_VERSION = 1;
         private const string REQUEST_NAME = "BTEngineAPI";
         private const string BTLINK_REQUEST = "BTEngine:Check";
         private const string BTLINK_RESPONSE = "BTEngine:Ready";

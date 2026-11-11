@@ -24,7 +24,7 @@ namespace BehaviorTreeAPI.Core
             }
             BTCharactersLogicData.Add(subtypeId, factory);
             BehaviorTreeSession.Instance.ConsoleLog("[BTEngine] External CharacterComponent registered: " +
-            subtypeId + " -> " + factory.Invoke().ToString() + " | " + BTCharactersLogicData.Count + " components registered.");
+            subtypeId + " -> " + factory.GetType().ToString() + " | " + BTCharactersLogicData.Count + " components registered.");
             return true;
         }
         public static bool UpdateExternalComponent(string subtype, Func<MyGameLogicComponent> factory)

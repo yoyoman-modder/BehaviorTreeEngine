@@ -10,7 +10,7 @@ namespace BehaviorTreeAPI.Examples
     /// <summary>
     /// This node makes the character idle. (Action)
     /// </summary>
-    public class Idle : BehaviorNode
+    public sealed class Idle : BehaviorNode
     {
         private float timer;
         private float duration;
@@ -43,7 +43,7 @@ namespace BehaviorTreeAPI.Examples
     /// <summary>
     /// This node checks if the characters health is above a certain threshold (True = >=) .(Conditional)
     /// </summary>
-    public class HealthAbove : BehaviorNode
+    public sealed class HealthAbove : BehaviorNode
     {
         private readonly double minimumHealth;
         public HealthAbove(double health)
@@ -84,7 +84,7 @@ namespace BehaviorTreeAPI.Examples
     /// <summary>
     /// This node waits for a specified duration before succeeding. Can be one-shot or resetable. (Logic)
     /// </summary>
-    public class Timer : BehaviorNode
+    public sealed class Timer : BehaviorNode
     {
         private readonly float duration;
         private readonly bool oneShot;

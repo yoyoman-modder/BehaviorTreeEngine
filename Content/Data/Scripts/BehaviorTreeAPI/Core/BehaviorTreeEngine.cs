@@ -1,5 +1,4 @@
-﻿using Sandbox.Game;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 
@@ -37,7 +36,10 @@ namespace BehaviorTreeAPI.Core
         }
         protected void Log(string message)
         {
-            MyVisualScriptLogicProvider.SendChatMessage($"{message}", "BT");
+            if (BehaviorTreeSession.Instance != null)
+            {
+                BehaviorTreeSession.Instance.Log(message,true);
+            }
         }
         protected NodeState Fail(string node,string reason)
         {
@@ -53,7 +55,7 @@ namespace BehaviorTreeAPI.Core
     /// <summary>
     /// This is a simple blackboard implementation for sharing data between nodes. (Memory)
     /// </summary>
-    public class Blackboard
+    public sealed class Blackboard
     {
         private readonly Dictionary<string, object> data = new Dictionary<string, object>();
         private BehaviorNode currentNode;
@@ -109,7 +111,7 @@ namespace BehaviorTreeAPI.Core
     /// The selected child remains active until it returns Success or Failure.
     /// A new random child is selected on the next execution.
     /// </summary>
-    public class RandomSelectorNode : BehaviorNode
+    public sealed class RandomSelectorNode : BehaviorNode
     {
         public readonly List<BehaviorNode> children;
         private int current;
@@ -179,7 +181,7 @@ namespace BehaviorTreeAPI.Core
     /// <summary>
     /// This node ticks its children is sequentally until one fails. AND logic, stops on first Failure. (Composite)
     /// </summary>
-    public class SequenceNode : BehaviorNode
+    public sealed class SequenceNode : BehaviorNode
     {
         public readonly List<BehaviorNode> children;
         private int current;
@@ -253,7 +255,7 @@ namespace BehaviorTreeAPI.Core
     /// <summary>
     /// This node ticks its children sequentually until one succeeds. OR logic, stops on first Success. Support many Children Nodes (Composite)
     /// </summary>
-    public class SelectorNode : BehaviorNode
+    public sealed class SelectorNode : BehaviorNode
     {
         public readonly List<BehaviorNode> children;
         private int current;
@@ -327,7 +329,7 @@ namespace BehaviorTreeAPI.Core
     /// <summary>
     /// This node repeats its child indefinitely Only ONE Child Node . (Composite)
     /// </summary>
-    public class LoopNode : BehaviorNode
+    public sealed class LoopNode : BehaviorNode
     {
         private readonly BehaviorNode child;
         private bool childStarted;
@@ -382,7 +384,7 @@ namespace BehaviorTreeAPI.Core
     /// <summary>
     /// This is the main Behavior Tree class that manages the execution of the tree.
     /// </summary>
-    public class BehaviorTree
+    public sealed class BehaviorTree
     {
         public readonly BehaviorNode root;
         private readonly Blackboard bb;
