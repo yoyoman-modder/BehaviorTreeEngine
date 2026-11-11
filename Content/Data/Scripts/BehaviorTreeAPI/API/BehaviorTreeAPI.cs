@@ -1045,10 +1045,12 @@ namespace BehaviorTreeAPI
                         BT = null;
                     }
                     BT = null;
-                    MyAPIGateway.Utilities.ShowMessage(
+                    if (Logs)
+                    {
+                        MyAPIGateway.Utilities.ShowMessage(
                                 "[BTEngine]",
-                                "BuildTree() Closed " + Entity.DisplayName
-                            );
+                                "BuildTree() Closed " + Character.DisplayName);
+                    }
                     Character = null;
                     Entity = null;
                     BTready = false;

@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <Bots>
+        <Bot xsi:type="MyObjectBuilder_AnimalBotDefinition">
+            <Id>
+                <TypeId>MyObjectBuilder_AnimalBot</TypeId>
+                <SubtypeId>Wolf</SubtypeId>
+            </Id>
+            <DisplayName>DisplayName_Space_Wolf</DisplayName>
+            <Icon>Textures\GUI\Icons\SpawnDeer.dds</Icon>
+            <BotModel>Space_Wolf</BotModel>
+            <BotBehaviorTree Subtype="DummyBT" />
+            <!-- Which behavior tree to use -->
+            <BehaviorType>Wolf</BehaviorType>
+            <!-- Which actions (and logic) class to use -->
+            <TargetType>Wolf</TargetType>
+            <Public>true</Public>
+            <AvailableInSurvival>false</AvailableInSurvival>
+            <RemoveAfterDeath>true</RemoveAfterDeath>
+            <InventoryContentGenerated>true</InventoryContentGenerated>
+            <InventoryContainerTypeId>
+                <TypeId>ContainerTypeDefinition</TypeId>
+                <SubtypeId>WolfLoot</SubtypeId>
+            </InventoryContainerTypeId>
+            <FactionTag>SPID</FactionTag>
+            <AttackLength>1000</AttackLength>
+            <AttackRadius>0.5</AttackRadius>
+            <CharacterDamage>12</CharacterDamage>
+            <GridDamage>0</GridDamage>
+            <TargetGrids>false</TargetGrids>
+            <TargetCharacters>true</TargetCharacters>
+            <AttackSound>ArcBotWolfAttack</AttackSound>
+            <WildlifeCategory>Wolf</WildlifeCategory>
+            <CanOpenDoors>false</CanOpenDoors>
+            <!-- AgentHeight/MaxClimb snap to integer multiples of MyRecastOptions.cellHeight; AgentRadius to integer multiples of MyPlatformGameSettings.NAVMESH_CELL_SIZE. Values here are on the Steam grid: the number is what Recast uses on Steam, and on console (coarser cellSize) it rounds up to the next cell count. -->
+            <AgentHeight>0.8</AgentHeight>
+            <AgentRadius>0.48</AgentRadius>
+            <AgentMaxClimb>0.4</AgentMaxClimb>
+            <AgentMaxSlope>55</AgentMaxSlope>
+            <SteeringBehaviors>
+                <SteeringBehavior xsi:type="MyObjectBuilder_BotForwardCollisionAvoidanceSteering" />
+            </SteeringBehaviors>
+        </Bot>
+    </Bots>
+</Definitions>
