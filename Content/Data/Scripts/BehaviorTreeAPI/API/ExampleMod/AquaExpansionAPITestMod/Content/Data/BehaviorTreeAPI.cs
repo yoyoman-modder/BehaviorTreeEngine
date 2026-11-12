@@ -16,7 +16,7 @@ namespace BehaviorTreeAPI
     /// Copy this file into another mod to communicate with
     /// BehaviorEngine.
     ///
-    /// The AquaExpansion provider uses:
+    ///  provider uses:
     ///     Request ID  = 7787
     ///     Response ID = 7778
     /// </summary>
@@ -903,6 +903,7 @@ namespace BehaviorTreeAPI
                 private bool Logs;
                 public bool BTready { get; private set; }
                 public bool BTInitializationScheduled { get; private set; }
+                public ClientBehaviorTree GetBehaviorTree { get { return BT; } }
                 public delegate ClientBehaviorTree BuildTreeDelegate();
                 /// <summary>
                 /// Schedule delayed BehaviorTree Initalization

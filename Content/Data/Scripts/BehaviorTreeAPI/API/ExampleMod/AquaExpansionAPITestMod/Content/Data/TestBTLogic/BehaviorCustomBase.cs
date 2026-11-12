@@ -13,7 +13,7 @@ namespace AquaExpansionAPITestMod.TestBTLogic
     {
         protected IMyCharacter Character;
         protected BTreeAPI.ClientBehaviorEngine.ClientBehaviorTree BT;
-        private BTreeAPI.ClientBehaviorEngine.ClientBehaviorManager BTManager;
+        protected BTreeAPI.ClientBehaviorEngine.ClientBehaviorManager BTManager;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {

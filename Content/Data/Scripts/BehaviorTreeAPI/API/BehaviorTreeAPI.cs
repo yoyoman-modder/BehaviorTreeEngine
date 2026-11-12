@@ -903,6 +903,7 @@ namespace BehaviorTreeAPI
                 private bool Logs;
                 public bool BTready { get; private set; }
                 public bool BTInitializationScheduled { get; private set; }
+                public ClientBehaviorTree GetBehaviorTree { get { return BT; } }
                 public delegate ClientBehaviorTree BuildTreeDelegate();
                 /// <summary>
                 /// Schedule delayed BehaviorTree Initalization

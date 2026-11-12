@@ -1,4 +1,5 @@
 ﻿using BehaviorTreeAPI;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.ObjectBuilders;
@@ -26,6 +27,14 @@ namespace AquaExpansionAPITestMod.TestBTLogic
         protected override void UpdateCustomCharacterLogic()
         {
             base.UpdateCustomCharacterLogic();
+            if (!IsValid() ||
+                Character.IsDead)
+                return;
+            BT = BTManager.GetBehaviorTree;
+            if (BT != null && BT.Blackboard != null)
+            {
+                MyAPIGateway.Utilities.ShowMessage("BT", "BT VALID");
+            }
             // custom logic
         }
     }
