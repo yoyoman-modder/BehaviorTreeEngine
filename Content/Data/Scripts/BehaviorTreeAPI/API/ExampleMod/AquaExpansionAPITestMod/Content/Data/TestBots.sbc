@@ -7,7 +7,7 @@
                 <SubtypeId>Wolf</SubtypeId>
             </Id>
             <DisplayName>DisplayName_Space_Wolf</DisplayName>
-            <Icon>Textures\GUI\Icons\SpawnDeer.dds</Icon>
+            <Icon></Icon>
             <BotModel>Space_Wolf</BotModel>
             <BotBehaviorTree Subtype="DummyBT" />
             <!-- Which behavior tree to use -->
