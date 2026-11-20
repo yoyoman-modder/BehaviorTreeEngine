@@ -2,7 +2,7 @@
 <Definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <AIBehaviors>
 	  <AIBehavior xsi:type="MyObjectBuilder_BehaviorTreeDefinition">
-		  <Id Type="MyObjectBuilder_BehaviorTreeDefinition" Subtype="AquaDummyBT" />
+		  <Id Type="MyObjectBuilder_BehaviorTreeDefinition" Subtype="DummyBT" />
 		  <PreemptOnTakeover>true</PreemptOnTakeover>
 		  <FirstNode xsi:type="MyObjectBuilder_BehaviorTreeSequenceNode">
 			  <BTNodes>

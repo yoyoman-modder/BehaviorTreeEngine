@@ -19,7 +19,11 @@ namespace AquaExpansionAPITestMod.TestBTLogic
             return new BTreeAPI.ClientBehaviorEngine.ClientBehaviorTree(//root node
                 new BTreeAPI.ClientBehaviorEngine.CompositeNodes.ClientLoopNode(// repeat forever child
                     new BTreeAPI.ClientBehaviorEngine.CompositeNodes.ClientSequenceNode(// run children in order until one fails
-                        new BTreeAPI.ClientBehaviorEngine.DefaultNodes.ClientHealthAbove(50)
+                        new BTreeAPI.ClientBehaviorEngine.CompositeNodes.ClientSelectorNode(
+                            new BTreeAPI.ClientBehaviorEngine.DefaultNodes.ClientHealthAbove(50),
+                            new MyNode()
+                            )
+                        
                     )
                 )
              );
@@ -33,7 +37,7 @@ namespace AquaExpansionAPITestMod.TestBTLogic
             BT = BTManager.GetBehaviorTree;
             if (BT != null && BT.Blackboard != null)
             {
-                MyAPIGateway.Utilities.ShowMessage("BT", "BT VALID");
+                //MyAPIGateway.Utilities.ShowMessage("BT", "BT VALID");
             }
             // custom logic
         }

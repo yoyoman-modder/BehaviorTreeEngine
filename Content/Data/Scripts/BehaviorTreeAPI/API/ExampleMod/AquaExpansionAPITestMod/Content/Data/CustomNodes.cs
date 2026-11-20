@@ -12,6 +12,7 @@ namespace AquaExpansionAPITestMod
         }
         public override BTreeAPI.ClientBehaviorEngine.ClientNodeState Tick(IMyCharacter character, float dt)
         {
+            SetCurrentNode();
             if (character == null || character.MarkedForClose)
             {
                 return SetState(ClientNodeState.Failure);

@@ -7,6 +7,7 @@ using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
+using VRageMath;
 
 namespace BehaviorTreeAPI
 {
@@ -905,6 +906,14 @@ namespace BehaviorTreeAPI
                 public bool BTInitializationScheduled { get; private set; }
                 public ClientBehaviorTree GetBehaviorTree { get { return BT; } }
                 public delegate ClientBehaviorTree BuildTreeDelegate();
+                private IMyGps ClientBTmarker;
+                private bool IsValid()
+                {
+                    return Character != null
+                        && Character.Physics != null
+                        && !Character.MarkedForClose
+                        && !Character.Closed;
+                }
                 /// <summary>
                 /// Schedule delayed BehaviorTree Initalization
                 /// </summary>
@@ -1039,6 +1048,7 @@ namespace BehaviorTreeAPI
                 /// </summary>
                 public void CloseBehaviorTree()
                 {
+                    CloseBTMarker();
                     Stop();
                     if (BT != null)
                     {
@@ -1056,6 +1066,89 @@ namespace BehaviorTreeAPI
                     Entity = null;
                     BTready = false;
                     BTInitializationScheduled = false;
+                }
+                /// <summary>
+                /// Update BehaviorTree Debug Marker
+                /// </summary>
+                public void UpdateBTMarker(bool show, Color Color, float length = 0.5f)
+                {
+                    if (!BTlinkHeartbeat)
+                        return;
+                    if (!IsValid() || Character.IsDead)
+                    {
+                        if (ClientBTmarker != null)
+                        {
+                            RemoveBTMarker(ClientBTmarker);
+                            ClientBTmarker = null;
+                        }
+                    }
+                    else
+                    {
+                        UpdateBTRunMarker(length,show,Color);
+                    }
+                }
+                /// <summary>
+                /// Update BehaviorTree Debug Marker
+                /// </summary>
+                private void UpdateBTRunMarker(float length,bool show,Color debugColor)
+                {
+                    if (!BTlinkHeartbeat)
+                        return;
+                    if (!IsValid())
+                        return;
+                    Vector3D pos = Character.GetPosition();
+                    Vector3D f = Character.WorldMatrix.Forward;
+                    if (show)
+                    {
+                        if (ClientBTmarker == null)
+                        {
+                            ClientBTmarker = CreateBTMarker();
+                        }
+                        ClientBTmarker.Coords = pos + (f * length);
+                        ClientBTmarker.ShowOnHud = true;
+                        ClientBTmarker.Name = $"BT Run\n" +
+                        (BT?.CurrentNodeName ?? "None");
+                        ClientBTmarker.GPSColor = debugColor;
+                    }
+                    else
+                    {
+                        if (ClientBTmarker != null)
+                        {
+                            RemoveBTMarker(ClientBTmarker);
+                            ClientBTmarker = null;
+                        }
+                    }
+                }
+                /// <summary>
+                /// Remove BehaviorTree Debug Marker
+                /// </summary>
+                /// <param name="clientBTmarker"></param>
+                private void RemoveBTMarker(IMyGps clientBTmarker)
+                {
+                    MyAPIGateway.Session.GPS.AddLocalGps(ClientBTmarker);
+                    ClientBTmarker.ShowOnHud = true;
+                    MyAPIGateway.Session.GPS.RemoveLocalGps(ClientBTmarker);
+                }
+                /// <summary>
+                /// Create Debug BehaviorTree marker
+                /// </summary>
+                /// <returns></returns>
+                private IMyGps CreateBTMarker()
+                {
+                    IMyGps btgps = MyAPIGateway.Session.GPS.Create(string.Empty, string.Empty, Vector3D.Zero, true, false);
+                    MyAPIGateway.Session.GPS.AddLocalGps(btgps);
+                    btgps.ShowOnHud = false;
+                    MyAPIGateway.Session.GPS.RemoveLocalGps(btgps);
+                    return btgps;
+                }
+                private void CloseBTMarker()
+                {
+                    if (ClientBTmarker != null)
+                    {
+                        RemoveBTMarker(ClientBTmarker);
+                        ClientBTmarker = null;
+                    }
+                    ClientBTmarker = null;
                 }
             }
         }

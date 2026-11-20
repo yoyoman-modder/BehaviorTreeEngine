@@ -1,11 +1,9 @@
 ﻿using BehaviorTreeAPI;
-using Sandbox.Game.Components;
-using Sandbox.Game.Entities.Character;
-using Sandbox.ModAPI;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
+using VRageMath;
 
 namespace AquaExpansionAPITestMod.TestBTLogic
 {
@@ -37,6 +35,7 @@ namespace AquaExpansionAPITestMod.TestBTLogic
             if (!IsValid())
                 return;
             BTManager.Update();
+            BTManager.UpdateBTMarker(true,Color.PaleGreen, 0.5f);
             UpdateCustomCharacterLogic();
             // other custom logic
             base.UpdateBeforeSimulation();
