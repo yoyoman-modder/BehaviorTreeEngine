@@ -1,5 +1,4 @@
 ﻿using BehaviorTreeAPI;
-using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.ObjectBuilders;
@@ -21,7 +20,10 @@ namespace AquaExpansionAPITestMod.TestBTLogic
                     new BTreeAPI.ClientBehaviorEngine.CompositeNodes.ClientSequenceNode(// run children in order until one fails
                         new BTreeAPI.ClientBehaviorEngine.CompositeNodes.ClientSelectorNode(
                             new BTreeAPI.ClientBehaviorEngine.DefaultNodes.ClientHealthAbove(50),
-                            new MyNode()
+                            new BTreeAPI.ClientBehaviorEngine.CompositeNodes.ClientSequenceNode(
+                                new BTreeAPI.ClientBehaviorEngine.DefaultNodes.ClientIdle(),
+                                new MyNode()
+                                )
                             )
                         
                     )
